@@ -36,10 +36,19 @@ public class PeerFeedbackProcessor {
                 JsonElement fileElement = JsonParser.parseReader(new FileReader(f.getPath()));
                 JsonObject fileObject = fileElement.getAsJsonObject();
 
-                JsonArray jsonArrayOfGroupMembers = fileObject.get("group").getAsJsonArray();
                 // A group is made up of feedback that matches each member's name
+                List<GroupFeedback> feedbacks = new ArrayList<>();
                 List<ArrayList<GroupFeedback>> group = new ArrayList<>();
+                GroupFeedback feedback = new GroupFeedback(fileObject.get("confidential_comments").getAsString());
 
+                JsonArray jsonArrayOfGroupMembers = fileObject.get("group").getAsJsonArray();
+                for (JsonElement memberElement : jsonArrayOfGroupMembers) {
+                    JsonObject memberObject = memberElement.getAsJsonObject();
+
+                    String name = memberObject.get("name").getAsString();
+                    String sfuEmail = memberObject.get("sfu_email").getAsString();
+                    Member member = new Member(name, sfuEmail, );
+                }
 
                 System.out.println(f.getName());
             }
