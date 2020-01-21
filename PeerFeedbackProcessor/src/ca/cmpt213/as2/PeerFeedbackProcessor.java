@@ -32,26 +32,49 @@ public class PeerFeedbackProcessor {
             System.exit(FAILURE);
         }
         try {
+//            List<ArrayList<GroupFeedback>> groups = new ArrayList<>();
+            List<GroupFeedback> groupOfFeedbacks = new ArrayList<>(); // Basically the json data
             for (File f : jsonFiles) {
                 JsonElement fileElement = JsonParser.parseReader(new FileReader(f.getPath()));
                 JsonObject fileObject = fileElement.getAsJsonObject();
 
-                // A group is made up of feedback that matches each member's name
-                List<GroupFeedback> feedbacks = new ArrayList<>();
-                List<ArrayList<GroupFeedback>> group = new ArrayList<>();
                 GroupFeedback feedback = new GroupFeedback(fileObject.get("confidential_comments").getAsString());
 
                 JsonArray jsonArrayOfGroupMembers = fileObject.get("group").getAsJsonArray();
                 for (JsonElement memberElement : jsonArrayOfGroupMembers) {
                     JsonObject memberObject = memberElement.getAsJsonObject();
+                    JsonObject contribution = memberObject.get("contribution").getAsJsonObject();
 
                     String name = memberObject.get("name").getAsString();
                     String sfuEmail = memberObject.get("sfu_email").getAsString();
-                    Member member = new Member(name, sfuEmail, );
-                }
+                    Double score = contribution.get("score").getAsDouble();
+                    String comment = contribution.get("comment").getAsString();
 
+                    StudentFeedback studentFeedback = new StudentFeedback(name, sfuEmail, score, comment);
+                    feedback.add(studentFeedback);
+                }
+                groupOfFeedbacks.add(feedback);
                 System.out.println(f.getName());
             }
+            // creating a group
+            GroupFeedback targetStudent;
+            List<GroupFeedback> sourceStudent = new ArrayList<>();
+            List<Group> groups = new ArrayList<>();
+            for (GroupFeedback target : groupOfFeedbacks) {
+                targetStudent = target;
+                for (GroupFeedback source : groupOfFeedbacks) {
+                    for (StudentFeedback memberInTarget : targetStudent) {
+                        String targetEmail = memberInTarget.sfuEmail.trim();
+                        String sourceEmail = source.getStudentFeedback(0).sfuEmail.trim();
+                        if (source != target && sourceEmail.equalsIgnoreCase(targetEmail)) {
+                            sourceStudent.add(source);
+                        }
+                    }
+                }
+                Group newGroup = new Group();
+                newGroup.add(targetStudent);
+            }
+            System.out.println("Group#,Source Student,Target Student,Score,Comment,,Private");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             System.exit(FAILURE);
