@@ -10,6 +10,7 @@ import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class PeerFeedbackProcessor {
@@ -54,29 +55,37 @@ public class PeerFeedbackProcessor {
                     feedback.add(studentFeedback);
                 }
                 groupOfFeedbacks.add(feedback);
-                System.out.println(f.getName());
             }
             // creating a group
             GroupFeedback targetStudent;
             List<GroupFeedback> sourceStudent = new ArrayList<>();
-            List<Group> groups = new ArrayList<>();
+//            List<Group> groups = new ArrayList<>();
+            int numGroupsMade = 0;
+            System.out.println("Group#,Source Student,Target Student,Score,Comment,,Private");
             for (GroupFeedback target : groupOfFeedbacks) {
                 targetStudent = target;
-                for (GroupFeedback source : groupOfFeedbacks) {
+//                for (GroupFeedback source : duplicateGOF) {
+                for (Iterator<GroupFeedback> iter = groupOfFeedbacks.iterator(); iter.hasNext();) {
+                    GroupFeedback source = iter.next();
                     for (StudentFeedback memberInTarget : targetStudent) {
                         String targetEmail = memberInTarget.sfuEmail.trim();
                         String sourceEmail = source.getStudentFeedback(0).sfuEmail.trim();
                         if (source != target && sourceEmail.equalsIgnoreCase(targetEmail)) {
                             sourceStudent.add(source);
+//                            groupOfFeedbacks.remove(source);
+                            iter.remove();
                         }
                     }
                 }
-                Group newGroup = new Group();
+                Group newGroup = new Group(sourceStudent);
                 newGroup.add(targetStudent);
+                numGroupsMade++;
+                System.out.println("Group " + numGroupsMade);
+                newGroup.sortMemberFeedbackAndOutput();
+                System.out.print("\n");
             }
-            System.out.println("Group#,Source Student,Target Student,Score,Comment,,Private");
+
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
             System.exit(FAILURE);
         }
     }
@@ -101,3 +110,4 @@ public class PeerFeedbackProcessor {
         }
     }
 } //java -jar out\artifacts\ProcessPeerFeedback_jar\ProcessPeerFeedback.jar InputTestDataSets\2-OneGroup
+//java -jar out/artifacts/PeerFeedbackProcessor_jar/PeerFeedbackProcessor.jar InputTestDataSets/2-OneGroup/
