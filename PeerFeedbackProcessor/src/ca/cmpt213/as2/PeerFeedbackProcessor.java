@@ -56,26 +56,34 @@ public class PeerFeedbackProcessor {
                 }
                 groupOfFeedbacks.add(feedback);
             }
+            List<GroupFeedback> dupe = new ArrayList<>();
+            for (GroupFeedback g : groupOfFeedbacks) {
+                dupe.add(g);
+            }
             // creating a group
             GroupFeedback targetStudent;
             List<GroupFeedback> sourceStudent = new ArrayList<>();
 //            List<Group> groups = new ArrayList<>();
             int numGroupsMade = 0;
             System.out.println("Group#,Source Student,Target Student,Score,Comment,,Private");
-            for (GroupFeedback target : groupOfFeedbacks) {
+            for (GroupFeedback target : dupe) {
                 targetStudent = target;
 //                for (GroupFeedback source : duplicateGOF) {
-                for (Iterator<GroupFeedback> iter = groupOfFeedbacks.iterator(); iter.hasNext();) {
-                    GroupFeedback source = iter.next();
+                for (Iterator<GroupFeedback> iterateForSources = groupOfFeedbacks.iterator();
+                     iterateForSources.hasNext();) {
+                    GroupFeedback source = iterateForSources.next();
                     for (StudentFeedback memberInTarget : targetStudent) {
                         String targetEmail = memberInTarget.sfuEmail.trim();
                         String sourceEmail = source.getStudentFeedback(0).sfuEmail.trim();
                         if (source != target && sourceEmail.equalsIgnoreCase(targetEmail)) {
                             sourceStudent.add(source);
 //                            groupOfFeedbacks.remove(source);
-                            iter.remove();
+                            iterateForSources.remove();
                         }
                     }
+                }
+                if (groupOfFeedbacks.isEmpty()) {
+                    break;
                 }
                 Group newGroup = new Group(sourceStudent);
                 newGroup.add(targetStudent);
