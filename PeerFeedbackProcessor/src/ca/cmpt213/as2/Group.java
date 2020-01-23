@@ -72,8 +72,8 @@ public class Group {
         String enhancedCommentToSelf = target.comment.replaceAll("\"", "'");
         String enhancedPrivateCommentToSelf = feedbackAboutTarget.confidentialComments.replaceAll(
                 "\"", "'");
-        System.out.printf(",-->,%s,%.1f,\"%s\",,\n", target.sfuEmail.trim(), target.score, enhancedCommentToSelf);
-        System.out.printf(",-->,%s,avg %.1f /%d,,\"%s\",\n", target.sfuEmail.trim(),
+        System.out.printf(",-->,%s,%.1f,\"%s\"\n", target.sfuEmail.trim(), target.score, enhancedCommentToSelf);
+        System.out.printf(",-->,%s,avg %.1f /%d,,,\"%s\"\n", target.sfuEmail.trim(),
                 targetAvgScore, numberOfFeedbacks, enhancedPrivateCommentToSelf);
     }
 }
