@@ -5,10 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,24 +13,27 @@ import java.util.List;
 public class PeerFeedbackProcessor {
     public static void main(String[] args) {
         final int FAILURE = -1;
-//        if (args.length != 2) {
-//            System.exit(FAILURE);
-//        }
+        if (args.length != 2) {
+            System.exit(FAILURE);
+        }
 
         String jsonDir = args[0];
-//        String csvDir = args[1];
-        File dir = new File(jsonDir);
-        if (!dir.exists()) {
+        String csvDir = args[1];
+        File jsonPath = new File(jsonDir);
+        File csvPath = new File(csvDir);
+        if (!jsonPath.exists() || !csvPath.exists()) {
+            System.err.println("Error: Directory not found!");
             System.exit(FAILURE);
         }
 
         List<File> jsonFiles = new ArrayList<>();
-        getJsonFiles(dir, jsonFiles);
+        getJsonFiles(jsonPath, jsonFiles);
         if (jsonFiles.isEmpty()) {
             System.exit(FAILURE);
         }
         try {
-//            List<ArrayList<GroupFeedback>> groups = new ArrayList<>();
+            FileWriter outputFile = new FileWriter(csvDir + "group_feedback.csv");
+            PrintWriter printer = new PrintWriter(outputFile);
             List<GroupFeedback> groupOfFeedbacks = new ArrayList<>(); // Basically the json data
             for (File f : jsonFiles) {
                 JsonElement fileElement = JsonParser.parseReader(new FileReader(f.getPath()));
@@ -49,6 +49,9 @@ public class PeerFeedbackProcessor {
                     String name = memberObject.get("name").getAsString();
                     String sfuEmail = memberObject.get("sfu_email").getAsString();
                     Double score = contribution.get("score").getAsDouble();
+                    if (score < 0) {
+                        System.exit(FAILURE);
+                    }
                     String comment = contribution.get("comment").getAsString();
 
                     StudentFeedback studentFeedback = new StudentFeedback(name, sfuEmail, score, comment);
@@ -56,44 +59,42 @@ public class PeerFeedbackProcessor {
                 }
                 groupOfFeedbacks.add(feedback);
             }
-            List<GroupFeedback> dupe = new ArrayList<>();
-            for (GroupFeedback g : groupOfFeedbacks) {
-                dupe.add(g);
-            }
+            List<GroupFeedback> dupe = new ArrayList<>(groupOfFeedbacks);
             // creating a group
-            GroupFeedback targetStudent;
-            List<GroupFeedback> sourceStudent = new ArrayList<>();
-//            List<Group> groups = new ArrayList<>();
+            List<GroupFeedback> groupedStudents = new ArrayList<>();
             int numGroupsMade = 0;
-            System.out.println("Group#,Source Student,Target Student,Score,Comment,,Private");
-            for (GroupFeedback target : dupe) {
-                targetStudent = target;
-//                for (GroupFeedback source : duplicateGOF) {
-                for (Iterator<GroupFeedback> iterateForSources = groupOfFeedbacks.iterator();
+            printer.println("Group#,Source Student,Target Student,Score,Comment,,Private");
+            for (GroupFeedback target : groupOfFeedbacks) {
+                String targetEmail = target.getStudentFeedback(0).sfuEmail.trim();
+                for (Iterator<GroupFeedback> iterateForSources = dupe.iterator();
                      iterateForSources.hasNext();) {
                     GroupFeedback source = iterateForSources.next();
-                    for (StudentFeedback memberInTarget : targetStudent) {
-                        String targetEmail = memberInTarget.sfuEmail.trim();
-                        String sourceEmail = source.getStudentFeedback(0).sfuEmail.trim();
-                        if (source != target && sourceEmail.equalsIgnoreCase(targetEmail)) {
-                            sourceStudent.add(source);
-//                            groupOfFeedbacks.remove(source);
+                    for (StudentFeedback sourceFeedback : source) {
+                        String sourceEmail = sourceFeedback.sfuEmail.trim();
+                        if (sourceEmail.equalsIgnoreCase(targetEmail)) {
+                            groupedStudents.add(source);
                             iterateForSources.remove();
                         }
                     }
                 }
-                if (groupOfFeedbacks.isEmpty()) {
+                if (groupedStudents.isEmpty()) {
+                    continue;
+                }
+                Group newGroup = new Group(groupedStudents);
+                numGroupsMade++;
+                printer.println("Group " + numGroupsMade);
+                newGroup.sortMemberFeedbackAndOutput(printer);
+                printer.print("\n");
+                groupedStudents.clear();
+                if (dupe.isEmpty()) {
                     break;
                 }
-                Group newGroup = new Group(sourceStudent);
-                newGroup.add(targetStudent);
-                numGroupsMade++;
-                System.out.println("Group " + numGroupsMade);
-                newGroup.sortMemberFeedbackAndOutput();
-                System.out.print("\n");
             }
-
+            printer.close();
+            outputFile.close();
         } catch (FileNotFoundException e) {
+            System.exit(FAILURE);
+        } catch (IOException io) {
             System.exit(FAILURE);
         }
     }

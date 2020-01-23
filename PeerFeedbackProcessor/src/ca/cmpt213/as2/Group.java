@@ -1,5 +1,9 @@
 package ca.cmpt213.as2;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -18,7 +22,7 @@ public class Group {
         groupMembers.add(student);
     }
 
-    public void sortMemberFeedbackAndOutput() {
+    public void sortMemberFeedbackAndOutput(PrintWriter printer) throws IOException {
         Collections.sort(groupMembers, new Comparator<GroupFeedback>() {
             @Override
             public int compare(GroupFeedback target1, GroupFeedback target2) {
@@ -49,21 +53,22 @@ public class Group {
                 }
             });
             GroupFeedback feedbackAboutTarget = new GroupFeedback(target.confidentialComments);
-//            feedbackAboutTarget.add(target.getStudentFeedback(0));
             for (StudentFeedback targetFeedback : sources) {
                 feedbackAboutTarget.add(targetFeedback);
             }
-            output(target.getStudentFeedback(0), feedbackAboutTarget);
+//            output(target.getStudentFeedback(0), feedbackAboutTarget);
+            output(target.getStudentFeedback(0), feedbackAboutTarget, printer);
             sources.clear();
         }
     }
 
-    private void output(StudentFeedback target, GroupFeedback feedbackAboutTarget) {
+    private void output(StudentFeedback target, GroupFeedback feedbackAboutTarget, PrintWriter printer) throws IOException {
+
         int numberOfFeedbacks = 0;
         Double partialAverage = 0.0;
         for (StudentFeedback feedback : feedbackAboutTarget) {
             String enhancedCommentAboutTarget = feedback.comment.replaceAll("\"", "'");
-            System.out.printf(",%s,%s,%.1f,\"%s\",,\n", feedback.sfuEmail.trim(),
+            printer.printf(",%s,%s,%.1f,\"%s\",,\n", feedback.sfuEmail.trim(),
                     target.sfuEmail.trim(), feedback.score, enhancedCommentAboutTarget);
             numberOfFeedbacks++;
             partialAverage += feedback.score;
@@ -72,8 +77,8 @@ public class Group {
         String enhancedCommentToSelf = target.comment.replaceAll("\"", "'");
         String enhancedPrivateCommentToSelf = feedbackAboutTarget.confidentialComments.replaceAll(
                 "\"", "'");
-        System.out.printf(",-->,%s,%.1f,\"%s\"\n", target.sfuEmail.trim(), target.score, enhancedCommentToSelf);
-        System.out.printf(",-->,%s,avg %.1f /%d,,,\"%s\"\n", target.sfuEmail.trim(),
+        printer.printf(",-->,%s,%.1f,\"%s\"\n", target.sfuEmail.trim(), target.score, enhancedCommentToSelf);
+        printer.printf(",-->,%s,avg %.1f /%d,,,\"%s\"\n", target.sfuEmail.trim(),
                 targetAvgScore, numberOfFeedbacks, enhancedPrivateCommentToSelf);
     }
 }
