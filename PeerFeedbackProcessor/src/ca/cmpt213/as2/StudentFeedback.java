@@ -12,4 +12,14 @@ public class StudentFeedback {
         this.score = score;
         this.comment = comment;
     }
+
+    @Override
+    public String toString() {
+        return "StudentFeedback{" +
+                "name='" + name + '\'' +
+                ", sfuEmail='" + sfuEmail + '\'' +
+                ", score=" + score +
+                ", comment='" + comment + '\'' +
+                '}';
+    }
 }

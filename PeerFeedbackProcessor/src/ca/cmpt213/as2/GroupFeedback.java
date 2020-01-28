@@ -16,6 +16,10 @@ public class GroupFeedback implements Iterable<StudentFeedback>{
         feedbacks.add(student);
     }
 
+    public int feedbackSize() {
+        return feedbacks.size();
+    }
+
     public StudentFeedback getStudentFeedback(int i) {
         return feedbacks.get(i);
     }
@@ -23,5 +27,13 @@ public class GroupFeedback implements Iterable<StudentFeedback>{
     @Override
     public Iterator<StudentFeedback> iterator() {
         return feedbacks.iterator();
+    }
+
+    @Override
+    public String toString() {
+        return "GroupFeedback{" +
+                "feedbacks=" + feedbacks +
+                ", confidentialComments='" + confidentialComments + '\'' +
+                '}';
     }
 }

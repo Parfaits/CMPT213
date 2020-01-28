@@ -1,8 +1,5 @@
 package ca.cmpt213.as2;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,19 +7,17 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Group {
-    public List<GroupFeedback> groupMembers;
-    public GroupFeedback target;
-    public List<StudentFeedback> sources = new ArrayList<>();
+    private final int FAILURE = -1;
+    private List<GroupFeedback> groupMembers;
+    private List<StudentFeedback> sources = new ArrayList<>();
 
     public Group(List<GroupFeedback> groupMembers) {
         this.groupMembers = groupMembers;
     }
 
-    public void add(GroupFeedback student) {
-        groupMembers.add(student);
-    }
-
-    public void sortMemberFeedbackAndOutput(PrintWriter printer) throws IOException {
+    public void sortMemberFeedbackAndOutput(PrintWriter printer) {
+        checkEmailTyposAndMissingMembers();
+        checkSumOfScores();
         Collections.sort(groupMembers, new Comparator<GroupFeedback>() {
             @Override
             public int compare(GroupFeedback target1, GroupFeedback target2) {
@@ -31,10 +26,9 @@ public class Group {
             }
         });
         for (GroupFeedback theTarget : groupMembers){
-            target = theTarget;
             for (GroupFeedback theSource : groupMembers) {
                 String sourceEmail = theSource.getStudentFeedback(0).sfuEmail.trim();
-                String targetEmail = target.getStudentFeedback(0).sfuEmail.trim();
+                String targetEmail = theTarget.getStudentFeedback(0).sfuEmail.trim();
                 if (!sourceEmail.equalsIgnoreCase(targetEmail)) {
                     for (StudentFeedback sourceFeedback : theSource) {
                         if (sourceFeedback.sfuEmail.trim().equalsIgnoreCase(targetEmail)) {
@@ -52,28 +46,70 @@ public class Group {
                     return source1.sfuEmail.trim().compareToIgnoreCase(source2.sfuEmail.trim());
                 }
             });
-            GroupFeedback feedbackAboutTarget = new GroupFeedback(target.confidentialComments);
+            GroupFeedback feedbackAboutTarget = new GroupFeedback(theTarget.confidentialComments);
             for (StudentFeedback targetFeedback : sources) {
                 feedbackAboutTarget.add(targetFeedback);
             }
-//            output(target.getStudentFeedback(0), feedbackAboutTarget);
-            output(target.getStudentFeedback(0), feedbackAboutTarget, printer);
+            output(theTarget.getStudentFeedback(0), feedbackAboutTarget, printer);
             sources.clear();
         }
     }
 
-    private void output(StudentFeedback target, GroupFeedback feedbackAboutTarget, PrintWriter printer) throws IOException {
+    private void checkEmailTyposAndMissingMembers() {
+        List<GroupFeedback> listToCheck = new ArrayList<>(groupMembers);
+        boolean foundMatch = false;
+        for (GroupFeedback g : groupMembers) {
+            for (GroupFeedback l : listToCheck) {
+                if (l.equals(g)) {
+                    continue;
+                }
+                for (StudentFeedback s : l) {
+                    String emailToCheck = g.getStudentFeedback(0).sfuEmail.trim();
+                    String emailToCheckWith = s.sfuEmail.trim();
+                    if (emailToCheck.equalsIgnoreCase(emailToCheckWith)) {
+                        foundMatch = true;
+                    }
+                }
+                if (foundMatch) {
+                    foundMatch = false;
+                } else {
+                    System.err.println("Error: Found typo or missing member in file containing: \n\n" + l);
+                    System.exit(FAILURE);
+                }
+            }
+        }
+    }
 
+    private void checkSumOfScores() {
+        Double sum = 0.0;
         int numberOfFeedbacks = 0;
-        Double partialAverage = 0.0;
+        for (GroupFeedback g: groupMembers) {
+            for (StudentFeedback s : g) {
+                sum += s.score;
+                numberOfFeedbacks++;
+            }
+            if (Math.abs(sum - (20 * numberOfFeedbacks)) < 0.1) {
+                System.err.println("Error: Sum of scores in the group is not " +
+                        "(20 * number of group members), with a tolerance of 0.1" +
+                        " In file containing:\n\n" + g.toString());
+                System.exit(FAILURE);
+            }
+            sum = 0.0;
+            numberOfFeedbacks = 0;
+        }
+    }
+
+    private void output(StudentFeedback target, GroupFeedback feedbackAboutTarget, PrintWriter printer) {
+        int numberOfFeedbacks = 0;
+        Double sum = 0.0;
         for (StudentFeedback feedback : feedbackAboutTarget) {
             String enhancedCommentAboutTarget = feedback.comment.replaceAll("\"", "'");
             printer.printf(",%s,%s,%.1f,\"%s\",,\n", feedback.sfuEmail.trim(),
                     target.sfuEmail.trim(), feedback.score, enhancedCommentAboutTarget);
             numberOfFeedbacks++;
-            partialAverage += feedback.score;
+            sum += feedback.score;
         }
-        Double targetAvgScore = partialAverage / numberOfFeedbacks;
+        Double targetAvgScore = sum / numberOfFeedbacks;
         String enhancedCommentToSelf = target.comment.replaceAll("\"", "'");
         String enhancedPrivateCommentToSelf = feedbackAboutTarget.confidentialComments.replaceAll(
                 "\"", "'");

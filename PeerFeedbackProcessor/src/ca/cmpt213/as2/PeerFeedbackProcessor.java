@@ -14,6 +14,7 @@ public class PeerFeedbackProcessor {
     public static void main(String[] args) {
         final int FAILURE = -1;
         if (args.length != 2) {
+            System.err.println("Error: Invalid number of arguments (needs 2)");
             System.exit(FAILURE);
         }
 
@@ -21,18 +22,23 @@ public class PeerFeedbackProcessor {
         String csvDir = args[1];
         File jsonPath = new File(jsonDir);
         File csvPath = new File(csvDir);
-        if (!jsonPath.exists() || !csvPath.exists()) {
-            System.err.println("Error: Directory not found!");
+        if (!jsonPath.exists()) {
+            System.err.println("Error: Directory not found for path: " + jsonPath.getAbsolutePath());
+            System.exit(FAILURE);
+        }
+        if (!csvPath.exists()) {
+            System.err.println("Error: Directory not found for path: " + csvPath.getAbsolutePath());
             System.exit(FAILURE);
         }
 
         List<File> jsonFiles = new ArrayList<>();
         getJsonFiles(jsonPath, jsonFiles);
-        if (jsonFiles.isEmpty()) {
+        if (jsonFiles.size() <= 1) {
+            System.err.println("Error: One or less .json files in: " + jsonPath.getAbsolutePath());
             System.exit(FAILURE);
         }
         try {
-            FileWriter outputFile = new FileWriter(csvDir + "group_feedback.csv");
+            FileWriter outputFile = new FileWriter(csvDir + "/group_feedback.csv");
             PrintWriter printer = new PrintWriter(outputFile);
             List<GroupFeedback> groupOfFeedbacks = new ArrayList<>(); // Basically the json data
             for (File f : jsonFiles) {
@@ -50,6 +56,7 @@ public class PeerFeedbackProcessor {
                     String sfuEmail = memberObject.get("sfu_email").getAsString();
                     Double score = contribution.get("score").getAsDouble();
                     if (score < 0) {
+                        System.err.println("Error: score < 0");
                         System.exit(FAILURE);
                     }
                     String comment = contribution.get("comment").getAsString();
@@ -93,8 +100,12 @@ public class PeerFeedbackProcessor {
             printer.close();
             outputFile.close();
         } catch (FileNotFoundException e) {
+            System.err.println("Error: File not found!");
+            e.printStackTrace();
             System.exit(FAILURE);
         } catch (IOException io) {
+            System.err.println("Error: IO error");
+            io.printStackTrace();
             System.exit(FAILURE);
         }
     }
