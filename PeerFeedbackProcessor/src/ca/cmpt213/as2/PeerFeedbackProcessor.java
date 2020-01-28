@@ -33,8 +33,8 @@ public class PeerFeedbackProcessor {
 
         List<File> jsonFiles = new ArrayList<>();
         getJsonFiles(jsonPath, jsonFiles);
-        if (jsonFiles.size() <= 1) {
-            System.err.println("Error: One or less .json files in: " + jsonPath.getAbsolutePath());
+        if (jsonFiles.size() < 1) {
+            System.err.println("Error: No .json files in: " + jsonPath.getAbsolutePath());
             System.exit(FAILURE);
         }
         try {

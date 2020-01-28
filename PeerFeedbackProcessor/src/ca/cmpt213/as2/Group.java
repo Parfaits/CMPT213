@@ -88,7 +88,7 @@ public class Group {
                 sum += s.score;
                 numberOfFeedbacks++;
             }
-            if (Math.abs(sum - (20 * numberOfFeedbacks)) < 0.1) {
+            if (!(Math.abs(sum - (20 * numberOfFeedbacks)) < 0.1)) {
                 System.err.println("Error: Sum of scores in the group is not " +
                         "(20 * number of group members), with a tolerance of 0.1" +
                         " In file containing:\n\n" + g.toString());
