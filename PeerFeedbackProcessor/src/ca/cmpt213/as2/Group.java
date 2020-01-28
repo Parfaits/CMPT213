@@ -16,6 +16,7 @@ public class Group {
     }
 
     public void sortMemberFeedbackAndOutput(PrintWriter printer) {
+        checkOnlyOneSubmission();
         checkEmailTyposAndMissingMembers();
         checkSumOfScores();
         Collections.sort(groupMembers, new Comparator<GroupFeedback>() {
@@ -77,6 +78,13 @@ public class Group {
                     System.exit(FAILURE);
                 }
             }
+        }
+    }
+
+    private void checkOnlyOneSubmission() {
+        if (groupMembers.size() == 1 && groupMembers.get(0).feedbackSize() != 1) {
+            System.err.println("Error: Only one submission found for this group:\n\n" + groupMembers.get(0).toString());
+            System.exit(FAILURE);
         }
     }
 
