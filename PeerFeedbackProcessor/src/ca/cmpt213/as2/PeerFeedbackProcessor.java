@@ -1,9 +1,6 @@
 package ca.cmpt213.as2;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -37,16 +34,17 @@ public class PeerFeedbackProcessor {
             System.err.println("Error: No .json files in: " + jsonPath.getAbsolutePath());
             System.exit(FAILURE);
         }
+        File fileToCheckFor = null;
         try {
             FileWriter outputFile = new FileWriter(csvDir + "/group_feedback.csv");
             PrintWriter printer = new PrintWriter(outputFile);
             List<GroupFeedback> groupOfFeedbacks = new ArrayList<>(); // Basically the json data
             for (File f : jsonFiles) {
+                fileToCheckFor = f;
                 JsonElement fileElement = JsonParser.parseReader(new FileReader(f.getPath()));
                 JsonObject fileObject = fileElement.getAsJsonObject();
 
                 GroupFeedback feedback = new GroupFeedback(fileObject.get("confidential_comments").getAsString());
-
                 JsonArray jsonArrayOfGroupMembers = fileObject.get("group").getAsJsonArray();
                 for (JsonElement memberElement : jsonArrayOfGroupMembers) {
                     JsonObject memberObject = memberElement.getAsJsonObject();
@@ -101,11 +99,17 @@ public class PeerFeedbackProcessor {
             outputFile.close();
         } catch (FileNotFoundException e) {
             System.err.println("Error: File not found!");
-            e.printStackTrace();
             System.exit(FAILURE);
         } catch (IOException io) {
-            System.err.println("Error: IO error");
-            io.printStackTrace();
+            System.err.println("Error: Failed to write to /group_feedback.csv");
+            System.exit(FAILURE);
+        } catch (JsonSyntaxException j) {
+            assert fileToCheckFor != null;
+            System.err.println("Error: Json syntax error in:\n" + fileToCheckFor.getAbsolutePath());
+            System.exit(FAILURE);
+        } catch (NullPointerException n) {
+            assert fileToCheckFor != null;
+            System.err.println("Error: Missing required field in:\n" + fileToCheckFor.getAbsolutePath());
             System.exit(FAILURE);
         }
     }
